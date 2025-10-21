@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model auth_accounts {
+  id                  Int       @id @default(autoincrement())
+  user_id             Int
+  provider            String    @db.VarChar
+  provider_account_id String    @unique @db.VarChar
+  access_token        String?
+  refresh_token       String?
+  expires_at          DateTime? @db.Timestamp(6)
+  created_at          DateTime? @db.Timestamp(6)
+  updated_at          DateTime? @db.Timestamp(6)
+  users               users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model document_fields {
+  id          Int       @id @default(autoincrement())
+  document_id Int
+  field_id    Int
+  created_at  DateTime? @db.Timestamp(6)
+  documents   documents @relation(fields: [document_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fields      fields    @relation(fields: [field_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model document_subjects {
+  id          Int       @id @default(autoincrement())
+  document_id Int
+  subject_id  Int
+  created_at  DateTime? @db.Timestamp(6)
+  documents   documents @relation(fields: [document_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subjects    subjects  @relation(fields: [subject_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model documents {
+  id                Int                 @id @default(autoincrement())
+  user_id           Int
+  title             String              @db.VarChar
+  numeric_score     Decimal?            @db.Decimal(4, 2)
+  grade_band        String?             @db.VarChar
+  instructor_name   String?             @db.VarChar
+  document_type     String?             @db.VarChar
+  access_type       String?             @default("free") @db.VarChar
+  price             Decimal?            @db.Decimal(10, 2)
+  suitable_school   String?             @db.VarChar
+  short_description String?
+  resource_type     String              @db.VarChar
+  resource_url      String              @db.VarChar
+  embed_allowed     Boolean?            @default(false)
+  mime_type         String?             @db.VarChar
+  storage_provider  String?             @default("local") @db.VarChar
+  file_size         Int?
+  created_at        DateTime?           @db.Timestamp(6)
+  updated_at        DateTime?           @db.Timestamp(6)
+  document_fields   document_fields[]
+  document_subjects document_subjects[]
+  users             users               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model fields {
+  id                   Int                    @id @default(autoincrement())
+  name                 String                 @unique @db.VarChar
+  description          String?
+  created_at           DateTime?              @db.Timestamp(6)
+  document_fields      document_fields[]
+  subject_fields       subject_fields[]
+  user_academic_fields user_academic_fields[]
+}
+
+model subject_fields {
+  id         Int       @id @default(autoincrement())
+  subject_id Int?
+  field_id   Int?
+  created_at DateTime? @db.Timestamp(6)
+  fields     fields?   @relation(fields: [field_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subjects   subjects? @relation(fields: [subject_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model subjects {
+  id                Int                 @id @default(autoincrement())
+  name              String              @unique @db.VarChar
+  description       String?
+  created_at        DateTime?           @db.Timestamp(6)
+  document_subjects document_subjects[]
+  subject_fields    subject_fields[]
+  user_subjects     user_subjects[]
+}
+
+model user_academic_fields {
+  id               Int       @id @default(autoincrement())
+  user_id          Int?
+  field_id         Int?
+  experience_years Int?
+  created_at       DateTime? @db.Timestamp(6)
+  fields           fields?   @relation(fields: [field_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users            users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user_subjects {
+  id          Int       @id @default(autoincrement())
+  user_id     Int?
+  subject_id  Int?
+  skill_level String?   @db.VarChar
+  created_at  DateTime? @db.Timestamp(6)
+  subjects    subjects? @relation(fields: [subject_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users       users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model users {
+  id                    Int                    @id @default(autoincrement())
+  full_name             String?                @db.VarChar
+  gender                String?                @db.VarChar
+  birth_day             DateTime?              @db.Date
+  email                 String                 @unique @db.VarChar
+  google_id             String?                @unique @db.VarChar
+  avatar_url            String?                @db.VarChar
+  current_position      String?                @db.VarChar
+  organization          String?                @db.VarChar
+  location              String?                @db.VarChar
+  facebook_link_contact String?                @db.VarChar
+  zalo_link_contact     String?                @db.VarChar
+  tiktok_link_contact   String?                @db.VarChar
+  website_link_contact  String?                @db.VarChar
+  portfolio_link        String?                @db.VarChar
+  created_at            DateTime?              @db.Timestamp(6)
+  auth_accounts         auth_accounts[]
+  documents             documents[]
+  user_academic_fields  user_academic_fields[]
+  user_subjects         user_subjects[]
+}
